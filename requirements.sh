@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -x
+cd $(readlink -f $(dirname $BASH_SOURCE[0]));
+
+PYTHON_VERSION=2
+    
+for OS in UNIX WINDOWS; do
+    if [[ $OS == 'UNIX' ]]; then
+        if [[ $PYTHON_VERSION == 2 ]]; then
+            PYTHON=`    which python2`
+            PIP=`       which pip2`
+            VIRTUALENV=`which virtualenv`
+        fi
+        if [[ $PYTHON_VERSION == 3 ]]; then
+            PYTHON=`which python3`
+            PIP=`   which pip3`
+            VIRTUALENV="$PYTHON -m venv"
+        fi
+        VENV=venv
+        VENV_BIN=./$VENV/bin
+        VENV_ACTIVATE=./$VENV/bin/activate
+    fi;
+    if [[ $OS == 'WINDOWS' ]]; then
+        if [[ $PYTHON_VERSION == 2 ]]; then
+            PYTHON=`     find /c/Users/$USER/AppData/Local/Programs/Python/Python2* -name 'python.exe'     | sort -nr | head -n 1`
+            PIP=`        find /c/Users/$USER/AppData/Local/Programs/Python/Python2* -name 'pip.exe'        | sort -nr | head -n 1`
+            VIRTUALENV=` find /c/Users/$USER/AppData/Local/Programs/Python/Python2* -name 'virtualenv.exe' | sort -nr | head -n 1`  # untested on Windows
+        fi
+        if [[ $PYTHON_VERSION == 3 ]]; then
+            PYTHON=`find /c/Users/$USER/AppData/Local/Programs/Python/Python3* -name 'python.exe' | sort -nr | head -n 1`
+            PIP=`   find /c/Users/$USER/AppData/Local/Programs/Python/Python3* -name 'pip.exe'    | sort -nr | head -n 1`
+            VIRTUALENV="$PYTHON -m venv"
+        fi
+        VENV=venv_windows
+        VENV_BIN=./$VENV/Scripts
+        VENV_ACTIVATE=./$VENV/Scripts/activate
+        
+        if [[ ! $PYTHON ]]; then continue; fi;  # don't install ./venv_windows/ if not on Windows
+    fi
+
+    # Install venv and dependencies
+    if [[ ! -d ./$VENV/ ]]; then
+        $VIRTUALENV ./$VENV/;
+
+        if [[ $OS == 'WINDOWS' ]]; then
+            dos2unix $VENV_ACTIVATE
+            perl -p -i -e "s/\"(C:.*)\"/'\$1'/g"       $VENV_ACTIVATE  # BUGFIX: syntax error near unexpected token `(' if [ "x(venv) " != x ] ; then'
+        fi
+        echo "export PATH=$VENV_BIN:\$PATH"                                      >> $VENV_ACTIVATE
+        echo 'export PYTHONSTARTUP=./.pythonstartup.py'                          >> $VENV_ACTIVATE
+        echo "PS1=\"($VENV) \$(echo \$PS1 | perl -p -e 's/^(\s*\(.*?\))+//g')\"" >> $VENV_ACTIVATE  # BUGFIX: $PS1 prompt
+    fi;
+
+    # Use pip and python from inside the virtualenv
+    source $VENV_ACTIVATE
+    if [[ $OS == 'UNIX' ]]; then
+        pip install --upgrade pip pip-tools
+        pip-compile
+        pip-sync
+    fi;
+    if [[ $OS == 'WINDOWS' ]]; then
+        python -m pip install --upgrade pip pip-tools
+        pip-compile.exe
+        pip-sync.exe
+    fi;
+done

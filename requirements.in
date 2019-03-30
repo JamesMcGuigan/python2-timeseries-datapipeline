@@ -1,0 +1,26 @@
+#
+# This file is input for pip-compile. Update this file, then run:
+#
+#    pip-compile
+#    pip-sync
+#
+# Or to check for version bump upgrades:
+#
+#    pip-review
+#
+
+# Python Buildchain Dependencies
+wheel
+pip-review
+pip-tools
+
+# .pythonstartup.py Dependencies
+readline
+
+# Test Dependencies
+nose
+
+# Dependencies
+pydash
+pathos
+
