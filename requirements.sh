@@ -7,9 +7,12 @@ PYTHON_VERSION=2
 for OS in UNIX WINDOWS; do
     if [[ $OS == 'UNIX' ]]; then
         if [[ $PYTHON_VERSION == 2 ]]; then
-            PYTHON=`    which python2`
-            PIP=`       which pip2`
-            VIRTUALENV=`which virtualenv`
+            # OSX python doesn't have openssl support for pip: brew install python@2
+            # if [[ `which brew` ]]; then brew install python@2; fi;
+
+            PYTHON=`     which python2`
+            PIP=`        which pip2`
+            VIRTUALENV="`which virtualenv` -p '$PYTHON'"
         fi
         if [[ $PYTHON_VERSION == 3 ]]; then
             PYTHON=`which python3`
