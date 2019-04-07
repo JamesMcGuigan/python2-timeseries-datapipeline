@@ -5,7 +5,7 @@ from multiprocessing import Queue
 class FileReader:
     debug = True
     
-    def __init__(self, filename, queue=None, wrapper=dict):
+    def __init__(self, filename, queue=None, wrapper=dict, start=False):
         if self.debug: print self.__class__.__name__, '__init__()', queue
         
         self.queue      = queue if queue is not None else Queue()
@@ -14,6 +14,8 @@ class FileReader:
         self.wrapper    = wrapper
 
         atexit.register(self.atexit)
+        if start == True:
+            self.start()
 
 
     @property
@@ -22,12 +24,13 @@ class FileReader:
             self.filehandle = open(self.filename, 'r', -1)
         return self.filehandle
 
+
     def start( self ):
         if self.debug: print self.__class__.__name__, 'start()', self.queue
         for linenumber, item in enumerate(self.reader):
             output = self.wrapper(item)
             self.queue.put(output)
-            # print self.queue, '<-', output
+
 
     def __del__(self):
         self.atexit()
