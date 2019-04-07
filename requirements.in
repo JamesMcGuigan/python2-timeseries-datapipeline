@@ -24,4 +24,5 @@ nose
 pydash
 pathos
 cached_property
+glob2
 
