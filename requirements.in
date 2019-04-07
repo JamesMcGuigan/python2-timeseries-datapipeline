@@ -23,4 +23,5 @@ nose
 # Dependencies
 pydash
 pathos
+cached_property
 

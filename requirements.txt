@@ -4,6 +4,7 @@
 #
 #    pip-compile 
 #
+cached-property==1.5.1
 click==7.0                # via pip-tools
 dill==0.2.9               # via multiprocess, pathos
 multiprocess==0.70.7      # via pathos
