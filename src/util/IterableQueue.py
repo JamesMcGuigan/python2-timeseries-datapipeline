@@ -10,6 +10,6 @@ class IterableQueue():
     def __iter__(self):
         while True:
             try:
-                yield self.source_queue.get_nowait()
+                yield self.source_queue.get(1)  # 1 second timeout | TODO: implement a more robust looping mechanism
             except Queue.Empty:
                 return
