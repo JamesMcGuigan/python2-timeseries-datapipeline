@@ -1,4 +1,6 @@
 import atexit
+import signal
+import sys
 from multiprocessing import Manager
 
 from cached_property import cached_property
@@ -15,6 +17,7 @@ class Globals:
 
 
     def __init__( self ):
+        signal.signal(signal.SIGINT, lambda x, y: self.onKeyboardInterrupt())
         atexit.register(self.atexit)
 
 
@@ -31,13 +34,20 @@ class Globals:
         return Manager()
 
 
-    # Destructor
+    # Class Destructor
     def __del__(self):
-        self.atexit()
-
-    def atexit( self ):
         # @cached_property stores in self.__dict__
         if "thread_pool"  in self.__dict__: self.thread_pool.close()
         if "process_pool" in self.__dict__: self.process_pool.close()
         if "thread_pool"  in self.__dict__: self.thread_pool.join()
         if "process_pool" in self.__dict__: self.process_pool.join()
+
+
+    # https://stackoverflow.com/questions/4205317/capture-keyboardinterrupt-in-python-without-try-except
+    # TODO: BUG: onKeyboardInterrupt() doesn't cleanly shutdown all child processes
+    def onKeyboardInterrupt( self ):
+        self.__del__()
+        sys.exit(0)
+
+    def atexit( self ):
+        self.__del__()
