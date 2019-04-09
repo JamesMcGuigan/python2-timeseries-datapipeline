@@ -33,11 +33,10 @@ for name, data in { "string": [data_string], "lines": data_lines }.iteritems():
                     print token
 
             if hasattr(lexer, 'parser'):
-                lexer.statements = []
                 result = lexer.parser.parse(line)
                 while True:
                     token = lexer.parser.token()
                     if not token or token.type == 'SEMI': break
                     print token
-                print "***** statements *****: "
-                print json.dumps(lexer.statements, indent=4*' ')
+                print "***** result *****: "
+                print json.dumps(result, indent=4*' ')

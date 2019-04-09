@@ -18,9 +18,7 @@ class Lexer(object):
     # Build the lexer
     def build(self, **kwargs):
         self.lexer  = lex.lex(module=self, debug=True, **kwargs)
-        self.parser = yacc.yacc(module=self,
-                                debug=True,
-                                ) 
+        self.parser = yacc.yacc(module=self, debug=True )
 
     # Test it output
     def test(self, data):
@@ -48,9 +46,8 @@ class Lexer(object):
 
 
 class SCLLexer(Lexer):
-    def __init__(self):
-        Lexer.__init__(self)
-        self.statements = []
+
+    ##### Lexer Rules #####
 
     # List of token names.   This is always required
     tokens = (
@@ -61,17 +58,8 @@ class SCLLexer(Lexer):
         'LPAREN',
         'RPAREN',
         'WHITESPACE',
-
-        ### Parser Keywords
-        # 'KEY',
-        # 'VALUE',
-        # 'PARENTHESES',
-        # 'STATEMENT',
-        # 'STATEMENTS',
     )
 
-
-    ### Lexer Rules
     # Regular expression rules for simple tokens
     t_KEYWORD     = r'\w+'
     t_WHITESPACE  = r'[ ]+'
@@ -88,7 +76,6 @@ class SCLLexer(Lexer):
     # Source: https://stackoverflow.com/questions/638565/parsing-scientific-notation-sensibly
     def t_NUMBER(self,t):
         r'[+-]?(\d*\.\d+|\d+)([eE][+-]?\d+)?'
-        # r'^[+\-]?(?=\.\d|\d)(?:0|[1-9]\d*)?(?:\.\d*)?(?:\d[eE][+\-]?\d+)?$'
         t.value = float(t.value)
         return t
 
@@ -105,8 +92,17 @@ class SCLLexer(Lexer):
         t.lexer.lineno += len(t.value)
 
 
-    ### Parser Rules
-    start = 'STATEMENTS'
+
+    ##### Parser Rules #####
+
+    ### Parser Keywords
+    # 'KEY',
+    # 'VALUE',
+    # 'PARENTHESES',
+    # 'STATEMENT',
+    # 'STATEMENTS',
+
+    start = 'STATEMENTS'  # returned as: result = lexer.parser.parse(line)
 
     # FIXED: figure out how to create an accumulator for an array of values | requires: t_ignore  = '\s+'
     # https://stackoverflow.com/questions/34445707/ply-yacc-pythonic-syntax-for-accumulating-list-of-comma-separated-values
@@ -130,7 +126,6 @@ class SCLLexer(Lexer):
             p[0] = { "key": p[1], "value": p[3], "children": p[4] }
         except:
             p[0] = { "key": p[1], "value": p[3] }
-        self.statements.append(p[0])  # TODO: find a better way to reset this variable between lines (not in testcase)
 
     
     def p_KEY(self, p):
@@ -140,12 +135,12 @@ class SCLLexer(Lexer):
             | KEYWORD
         '''
         p[0] = p[1]
-    
+
+
     def p_VALUE(self, p):
-        '''
-        VALUE   : KEY
-        '''
+        'VALUE   : KEY'
         p[0] = p[1]
+
 
     def p_PARENTHESES(self, p):
         'PARENTHESES : LPAREN STATEMENTS RPAREN'
