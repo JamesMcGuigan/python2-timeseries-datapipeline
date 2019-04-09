@@ -3,6 +3,7 @@
 # Class example: http://www.dabeaz.com/ply/ply.html#ply_nn17
 
 import re
+from decimal import Decimal
 
 import ply.lex as lex
 import ply.yacc as yacc
@@ -77,7 +78,7 @@ class SCLLexer(Lexer):
     # Source: https://stackoverflow.com/questions/638565/parsing-scientific-notation-sensibly
     def t_NUMBER(self,t):
         r'[+-]?(\d*\.\d+|\d+)([eE][+-]?\d+)?'
-        t.value = float(t.value)
+        t.value = Decimal(t.value)
         return t
 
     # Source: https://stackoverflow.com/questions/249791/regex-for-quoted-string-with-escaping-quotes
