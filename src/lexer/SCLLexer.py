@@ -58,6 +58,7 @@ class SCLLexer(Lexer):
         'LPAREN',
         'RPAREN',
         'WHITESPACE',
+        'NEWLINE',
     )
 
     # Regular expression rules for simple tokens
@@ -105,10 +106,11 @@ class SCLLexer(Lexer):
     start = 'STATEMENTS'  # returned as: result = lexer.parser.parse(line)
 
     # FIXED: figure out how to create an accumulator for an array of values | requires: t_ignore  = '\s+'
+    # NOTE:  "STATEMENT WHITESPACE STATEMENTS" produces same result as "STATEMENTS WHITESPACE STATEMENT"
     # https://stackoverflow.com/questions/34445707/ply-yacc-pythonic-syntax-for-accumulating-list-of-comma-separated-values
     def p_STATEMENTS(self, p):
         '''
-        STATEMENTS : STATEMENTS WHITESPACE STATEMENT
+        STATEMENTS : STATEMENT WHITESPACE STATEMENTS
                    | STATEMENT
         '''
         p[0] = []
