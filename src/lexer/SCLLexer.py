@@ -122,6 +122,7 @@ class SCLLexer(Lexer):
     def p_STATEMENT(self, p):
         '''
         STATEMENT : KEY EQUALS VALUE PARENTHESES
+                  | KEY EQUALS PARENTHESES
                   | KEY EQUALS VALUE
         '''
         try:
