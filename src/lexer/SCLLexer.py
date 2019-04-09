@@ -132,18 +132,22 @@ class SCLLexer(Lexer):
     
     def p_KEY(self, p):
         '''
-        KEY : STRING
-            | NUMBER
-            | KEYWORD
+        KEY     : KEYWORD
         '''
         p[0] = p[1]
 
 
     def p_VALUE(self, p):
-        'VALUE   : KEY'
+        '''
+        VALUE   : STRING
+                | NUMBER
+                | KEYWORD
+        '''
         p[0] = p[1]
 
 
     def p_PARENTHESES(self, p):
-        'PARENTHESES : LPAREN STATEMENTS RPAREN'
+        '''
+        PARENTHESES : LPAREN STATEMENTS RPAREN
+        '''
         p[0] = p[2]

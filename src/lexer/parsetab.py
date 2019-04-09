@@ -6,9 +6,9 @@ _tabversion = '3.10'
 
 _lr_method = 'LALR'
 
-_lr_signature = 'STATEMENTSEQUALS KEYWORD LPAREN NEWLINE NUMBER RPAREN STRING WHITESPACE\n        STATEMENTS : STATEMENT WHITESPACE STATEMENTS\n                   | STATEMENT\n        \n        STATEMENT : KEY EQUALS VALUE PARENTHESES\n                  | KEY EQUALS VALUE\n        \n        KEY : STRING\n            | NUMBER\n            | KEYWORD\n        VALUE   : KEYPARENTHESES : LPAREN STATEMENTS RPAREN'
+_lr_signature = 'STATEMENTSEQUALS KEYWORD LPAREN NEWLINE NUMBER RPAREN STRING WHITESPACE\n        STATEMENTS : STATEMENT WHITESPACE STATEMENTS\n                   | STATEMENT\n        \n        STATEMENT : KEY EQUALS VALUE PARENTHESES\n                  | KEY EQUALS VALUE\n        \n        KEY     : KEYWORD\n        \n        VALUE   : STRING\n                | NUMBER\n                | KEYWORD\n        \n        PARENTHESES : LPAREN STATEMENTS RPAREN\n        '
     
-_lr_action_items = {'RPAREN':([2,3,4,6,9,10,11,12,14,15,],[-7,-6,-2,-5,-1,-4,-8,-3,15,-9,]),'STRING':([0,7,8,13,],[6,6,6,6,]),'KEYWORD':([0,7,8,13,],[2,2,2,2,]),'EQUALS':([2,3,5,6,],[-7,-6,8,-5,]),'NUMBER':([0,7,8,13,],[3,3,3,3,]),'WHITESPACE':([2,3,4,6,10,11,12,15,],[-7,-6,7,-5,-4,-8,-3,-9,]),'LPAREN':([2,3,6,10,11,],[-7,-6,-5,13,-8,]),'$end':([1,2,3,4,6,9,10,11,12,15,],[0,-7,-6,-2,-5,-1,-4,-8,-3,-9,]),}
+_lr_action_items = {'RPAREN':([3,7,8,9,10,11,12,14,15,],[-2,-1,-6,-8,-7,-4,-3,15,-9,]),'STRING':([6,],[8,]),'KEYWORD':([0,5,6,13,],[2,2,9,2,]),'EQUALS':([2,4,],[-5,6,]),'NUMBER':([6,],[10,]),'LPAREN':([8,9,10,11,],[-6,-8,-7,13,]),'$end':([1,3,7,8,9,10,11,12,15,],[0,-2,-1,-6,-8,-7,-4,-3,-9,]),'WHITESPACE':([3,8,9,10,11,12,15,],[5,-6,-8,-7,-4,-3,-9,]),}
 
 _lr_action = {}
 for _k, _v in _lr_action_items.items():
@@ -17,7 +17,7 @@ for _k, _v in _lr_action_items.items():
       _lr_action[_x][_k] = _y
 del _lr_action_items
 
-_lr_goto_items = {'VALUE':([8,],[10,]),'PARENTHESES':([10,],[12,]),'STATEMENTS':([0,7,13,],[1,9,14,]),'KEY':([0,7,8,13,],[5,5,11,5,]),'STATEMENT':([0,7,13,],[4,4,4,]),}
+_lr_goto_items = {'VALUE':([6,],[11,]),'PARENTHESES':([11,],[12,]),'STATEMENTS':([0,5,13,],[1,7,14,]),'KEY':([0,5,13,],[4,4,4,]),'STATEMENT':([0,5,13,],[3,3,3,]),}
 
 _lr_goto = {}
 for _k, _v in _lr_goto_items.items():
@@ -27,13 +27,13 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 _lr_productions = [
   ("S' -> STATEMENTS","S'",1,None,None,None),
-  ('STATEMENTS -> STATEMENT WHITESPACE STATEMENTS','STATEMENTS',3,'p_STATEMENTS','SCLLexer.py',112),
-  ('STATEMENTS -> STATEMENT','STATEMENTS',1,'p_STATEMENTS','SCLLexer.py',113),
-  ('STATEMENT -> KEY EQUALS VALUE PARENTHESES','STATEMENT',4,'p_STATEMENT','SCLLexer.py',123),
-  ('STATEMENT -> KEY EQUALS VALUE','STATEMENT',3,'p_STATEMENT','SCLLexer.py',124),
-  ('KEY -> STRING','KEY',1,'p_KEY','SCLLexer.py',134),
-  ('KEY -> NUMBER','KEY',1,'p_KEY','SCLLexer.py',135),
-  ('KEY -> KEYWORD','KEY',1,'p_KEY','SCLLexer.py',136),
-  ('VALUE -> KEY','VALUE',1,'p_VALUE','SCLLexer.py',142),
-  ('PARENTHESES -> LPAREN STATEMENTS RPAREN','PARENTHESES',3,'p_PARENTHESES','SCLLexer.py',147),
+  ('STATEMENTS -> STATEMENT WHITESPACE STATEMENTS','STATEMENTS',3,'p_STATEMENTS','SCLLexer.py',113),
+  ('STATEMENTS -> STATEMENT','STATEMENTS',1,'p_STATEMENTS','SCLLexer.py',114),
+  ('STATEMENT -> KEY EQUALS VALUE PARENTHESES','STATEMENT',4,'p_STATEMENT','SCLLexer.py',124),
+  ('STATEMENT -> KEY EQUALS VALUE','STATEMENT',3,'p_STATEMENT','SCLLexer.py',125),
+  ('KEY -> KEYWORD','KEY',1,'p_KEY','SCLLexer.py',135),
+  ('VALUE -> STRING','VALUE',1,'p_VALUE','SCLLexer.py',142),
+  ('VALUE -> NUMBER','VALUE',1,'p_VALUE','SCLLexer.py',143),
+  ('VALUE -> KEYWORD','VALUE',1,'p_VALUE','SCLLexer.py',144),
+  ('PARENTHESES -> LPAREN STATEMENTS RPAREN','PARENTHESES',3,'p_PARENTHESES','SCLLexer.py',151),
 ]
