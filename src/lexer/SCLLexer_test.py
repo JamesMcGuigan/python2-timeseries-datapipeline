@@ -13,17 +13,11 @@ _dirname  = path.dirname(_filename)
 datafile = path.join( _dirname, 'SCL.txt' )
 
 with open(datafile) as file:
-    data_string = file.read()
-with open(datafile) as file:
     data_lines = file.readlines()
-
-for name, data in { "string": [data_string], "lines": data_lines }.iteritems():
-
     lexer  = SCLLexer()
-
-    for linenumber, line in enumerate(data):
+    for linenumber, line in enumerate(data_lines):
         if not re.match(r'^\s*$', line):
-            print "\n**********\n", name, ':', linenumber, ':', line, "**********\n"
+            print "\n**********\n", linenumber, ':', line, "**********\n"
 
             if hasattr(lexer, 'lexer'):
                 lexer.lexer.input(line)
