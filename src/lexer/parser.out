@@ -1,0 +1,221 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> STATEMENTS
+Rule 1     STATEMENTS -> STATEMENT WHITESPACE STATEMENTS
+Rule 2     STATEMENTS -> STATEMENT
+Rule 3     STATEMENT -> KEY EQUALS VALUE PARENTHESES
+Rule 4     STATEMENT -> KEY EQUALS VALUE
+Rule 5     KEY -> STRING
+Rule 6     KEY -> NUMBER
+Rule 7     KEY -> KEYWORD
+Rule 8     VALUE -> KEY
+Rule 9     PARENTHESES -> LPAREN STATEMENTS RPAREN
+
+Terminals, with rules where they appear
+
+EQUALS               : 3 4
+KEYWORD              : 7
+LPAREN               : 9
+NUMBER               : 6
+RPAREN               : 9
+STRING               : 5
+WHITESPACE           : 1
+error                : 
+
+Nonterminals, with rules where they appear
+
+KEY                  : 3 4 8
+PARENTHESES          : 3
+STATEMENT            : 1 2
+STATEMENTS           : 1 9 0
+VALUE                : 3 4
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . STATEMENTS
+    (1) STATEMENTS -> . STATEMENT WHITESPACE STATEMENTS
+    (2) STATEMENTS -> . STATEMENT
+    (3) STATEMENT -> . KEY EQUALS VALUE PARENTHESES
+    (4) STATEMENT -> . KEY EQUALS VALUE
+    (5) KEY -> . STRING
+    (6) KEY -> . NUMBER
+    (7) KEY -> . KEYWORD
+
+    STRING          shift and go to state 6
+    NUMBER          shift and go to state 3
+    KEYWORD         shift and go to state 2
+
+    STATEMENTS                     shift and go to state 1
+    KEY                            shift and go to state 5
+    STATEMENT                      shift and go to state 4
+
+state 1
+
+    (0) S' -> STATEMENTS .
+
+
+
+state 2
+
+    (7) KEY -> KEYWORD .
+
+    EQUALS          reduce using rule 7 (KEY -> KEYWORD .)
+    LPAREN          reduce using rule 7 (KEY -> KEYWORD .)
+    WHITESPACE      reduce using rule 7 (KEY -> KEYWORD .)
+    $end            reduce using rule 7 (KEY -> KEYWORD .)
+    RPAREN          reduce using rule 7 (KEY -> KEYWORD .)
+
+
+state 3
+
+    (6) KEY -> NUMBER .
+
+    EQUALS          reduce using rule 6 (KEY -> NUMBER .)
+    LPAREN          reduce using rule 6 (KEY -> NUMBER .)
+    WHITESPACE      reduce using rule 6 (KEY -> NUMBER .)
+    $end            reduce using rule 6 (KEY -> NUMBER .)
+    RPAREN          reduce using rule 6 (KEY -> NUMBER .)
+
+
+state 4
+
+    (1) STATEMENTS -> STATEMENT . WHITESPACE STATEMENTS
+    (2) STATEMENTS -> STATEMENT .
+
+    WHITESPACE      shift and go to state 7
+    RPAREN          reduce using rule 2 (STATEMENTS -> STATEMENT .)
+    $end            reduce using rule 2 (STATEMENTS -> STATEMENT .)
+
+
+state 5
+
+    (3) STATEMENT -> KEY . EQUALS VALUE PARENTHESES
+    (4) STATEMENT -> KEY . EQUALS VALUE
+
+    EQUALS          shift and go to state 8
+
+
+state 6
+
+    (5) KEY -> STRING .
+
+    EQUALS          reduce using rule 5 (KEY -> STRING .)
+    LPAREN          reduce using rule 5 (KEY -> STRING .)
+    WHITESPACE      reduce using rule 5 (KEY -> STRING .)
+    $end            reduce using rule 5 (KEY -> STRING .)
+    RPAREN          reduce using rule 5 (KEY -> STRING .)
+
+
+state 7
+
+    (1) STATEMENTS -> STATEMENT WHITESPACE . STATEMENTS
+    (1) STATEMENTS -> . STATEMENT WHITESPACE STATEMENTS
+    (2) STATEMENTS -> . STATEMENT
+    (3) STATEMENT -> . KEY EQUALS VALUE PARENTHESES
+    (4) STATEMENT -> . KEY EQUALS VALUE
+    (5) KEY -> . STRING
+    (6) KEY -> . NUMBER
+    (7) KEY -> . KEYWORD
+
+    STRING          shift and go to state 6
+    NUMBER          shift and go to state 3
+    KEYWORD         shift and go to state 2
+
+    STATEMENTS                     shift and go to state 9
+    KEY                            shift and go to state 5
+    STATEMENT                      shift and go to state 4
+
+state 8
+
+    (3) STATEMENT -> KEY EQUALS . VALUE PARENTHESES
+    (4) STATEMENT -> KEY EQUALS . VALUE
+    (8) VALUE -> . KEY
+    (5) KEY -> . STRING
+    (6) KEY -> . NUMBER
+    (7) KEY -> . KEYWORD
+
+    STRING          shift and go to state 6
+    NUMBER          shift and go to state 3
+    KEYWORD         shift and go to state 2
+
+    VALUE                          shift and go to state 10
+    KEY                            shift and go to state 11
+
+state 9
+
+    (1) STATEMENTS -> STATEMENT WHITESPACE STATEMENTS .
+
+    RPAREN          reduce using rule 1 (STATEMENTS -> STATEMENT WHITESPACE STATEMENTS .)
+    $end            reduce using rule 1 (STATEMENTS -> STATEMENT WHITESPACE STATEMENTS .)
+
+
+state 10
+
+    (3) STATEMENT -> KEY EQUALS VALUE . PARENTHESES
+    (4) STATEMENT -> KEY EQUALS VALUE .
+    (9) PARENTHESES -> . LPAREN STATEMENTS RPAREN
+
+    WHITESPACE      reduce using rule 4 (STATEMENT -> KEY EQUALS VALUE .)
+    RPAREN          reduce using rule 4 (STATEMENT -> KEY EQUALS VALUE .)
+    $end            reduce using rule 4 (STATEMENT -> KEY EQUALS VALUE .)
+    LPAREN          shift and go to state 13
+
+    PARENTHESES                    shift and go to state 12
+
+state 11
+
+    (8) VALUE -> KEY .
+
+    LPAREN          reduce using rule 8 (VALUE -> KEY .)
+    WHITESPACE      reduce using rule 8 (VALUE -> KEY .)
+    $end            reduce using rule 8 (VALUE -> KEY .)
+    RPAREN          reduce using rule 8 (VALUE -> KEY .)
+
+
+state 12
+
+    (3) STATEMENT -> KEY EQUALS VALUE PARENTHESES .
+
+    WHITESPACE      reduce using rule 3 (STATEMENT -> KEY EQUALS VALUE PARENTHESES .)
+    RPAREN          reduce using rule 3 (STATEMENT -> KEY EQUALS VALUE PARENTHESES .)
+    $end            reduce using rule 3 (STATEMENT -> KEY EQUALS VALUE PARENTHESES .)
+
+
+state 13
+
+    (9) PARENTHESES -> LPAREN . STATEMENTS RPAREN
+    (1) STATEMENTS -> . STATEMENT WHITESPACE STATEMENTS
+    (2) STATEMENTS -> . STATEMENT
+    (3) STATEMENT -> . KEY EQUALS VALUE PARENTHESES
+    (4) STATEMENT -> . KEY EQUALS VALUE
+    (5) KEY -> . STRING
+    (6) KEY -> . NUMBER
+    (7) KEY -> . KEYWORD
+
+    STRING          shift and go to state 6
+    NUMBER          shift and go to state 3
+    KEYWORD         shift and go to state 2
+
+    STATEMENTS                     shift and go to state 14
+    KEY                            shift and go to state 5
+    STATEMENT                      shift and go to state 4
+
+state 14
+
+    (9) PARENTHESES -> LPAREN STATEMENTS . RPAREN
+
+    RPAREN          shift and go to state 15
+
+
+state 15
+
+    (9) PARENTHESES -> LPAREN STATEMENTS RPAREN .
+
+    WHITESPACE      reduce using rule 9 (PARENTHESES -> LPAREN STATEMENTS RPAREN .)
+    $end            reduce using rule 9 (PARENTHESES -> LPAREN STATEMENTS RPAREN .)
+    RPAREN          reduce using rule 9 (PARENTHESES -> LPAREN STATEMENTS RPAREN .)
+
