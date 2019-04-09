@@ -61,8 +61,8 @@ class SCLLexer(Lexer):
         'LPAREN',
         'RPAREN',
         'WHITESPACE',
-        # 'NEWLINE',
 
+        ### Parser Keywords
         # 'KEY',
         # 'VALUE',
         # 'PARENTHESES',
@@ -80,7 +80,7 @@ class SCLLexer(Lexer):
     t_RPAREN      = r'[ ]*\)'
 
     # A string containing ignored characters (spaces and tabs)
-    t_ignore  = ' \t'
+    t_ignore  = r'\s+'
 
 
     # A regular expression rule with some action code
@@ -106,40 +106,19 @@ class SCLLexer(Lexer):
 
 
     ### Parser Rules
-    # start = 'STATEMENT'
+    start = 'STATEMENTS'
 
-    # # TODO: ('Syntax error at token', 'EQUALS')
-    # # TODO: ('Syntax error at token', 'STRING')
-    # def p_expression(self, p):
-    #     '''
-    #     STATEMENTS      : STATEMENTS WHITESPACE STATEMENT
-    #                     | STATEMENT
-    #
-    #     STATEMENT       : KEY EQUALS VALUE
-    #
-    #     KEY             : STRING
-    #                     | NUMBER
-    #                     | KEYWORD
-    #
-    #     VALUE           : KEY PARENTHESES
-    #                     | KEY
-    #
-    #     PARENTHESES     : LPAREN STATEMENTS RPAREN
-    #     '''
-    #     pass
-
-    # BROKEN: only ever returns a single item
-    # TODO: figure out how to create an accumulator for an array of values
+    # FIXED: figure out how to create an accumulator for an array of values | requires: t_ignore  = '\s+'
     # https://stackoverflow.com/questions/34445707/ply-yacc-pythonic-syntax-for-accumulating-list-of-comma-separated-values
     def p_STATEMENTS(self, p):
         '''
-        STATEMENTS : STATEMENT WHITESPACE STATEMENTS
+        STATEMENTS : STATEMENTS WHITESPACE STATEMENT
                    | STATEMENT
         '''
-        if len(p) == 2:
-            p[0] = [p[1]]
-        else:
-            p[0] = p[1] + [p[3]]  # BROKEN: this never happens
+        p[0] = []
+        for n in range(1, len(p)):
+            if isinstance(p[n], list): p[0] +=   p[n]
+            if isinstance(p[n], dict): p[0] += [ p[n] ]
 
 
     def p_STATEMENT(self, p):
