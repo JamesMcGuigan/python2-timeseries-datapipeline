@@ -1,4 +1,5 @@
 import atexit
+from Queue import Empty
 from multiprocessing import Queue
 
 
@@ -30,6 +31,7 @@ class FileReader:
         for linenumber, item in enumerate(self.reader):
             output = self.wrapper(item)
             self.queue.put(output)
+        self.queue.put(Empty)
 
 
     def __del__(self):
