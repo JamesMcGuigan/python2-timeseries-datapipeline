@@ -1,3 +1,7 @@
 .idea
 venv
 src.untested
+
+*.pyc
+parsetab.py
+parser.out
