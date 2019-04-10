@@ -28,9 +28,5 @@ with open(datafile) as file:
 
             if hasattr(lexer, 'parser'):
                 result = lexer.parser.parse(line)
-                while True:
-                    token = lexer.parser.token()
-                    if not token or token.type == 'SEMI': break
-                    print token
                 print "***** result *****: "
                 print json.dumps(result, indent=4*' ')
