@@ -14,7 +14,7 @@ class FileReader:
         self.filehandle = None
         self.wrapper    = wrapper
 
-        atexit.register(self.atexit)
+        atexit.register(self.onExit)
         if start == True:
             self.start()
 
@@ -35,10 +35,10 @@ class FileReader:
 
 
     def __del__(self):
-        self.atexit()
+        self.onExit()
 
-    def atexit( self ):
-        if self.debug: print self.__class__.__name__, 'atexit()',
+    def onExit( self ):
+        if self.debug: print self.__class__.__name__, 'onExit()',
         try:
             self.filehandle.close()
         except: pass
