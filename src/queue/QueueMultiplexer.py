@@ -202,7 +202,7 @@ class SortedQueueMultiplexer(QueueMultiplexer):
             output = self.options['sort_key'].__call__(item)
 
         elif isinstance(self.options['sort_key'], (str, list)):
-            # extracts nested key "a.b.c" or ["a", "b", "c"] and evaluates result if lambda() = pydash._result()
+            # extracts nested key "a.b.c" or ["a", "b", "c"] and evaluates result if callable()
             # was: output = pydash.result(item, self.options['sort_key'])
 
             sort_keys = self.options['sort_key']
