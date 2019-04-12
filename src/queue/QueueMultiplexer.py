@@ -12,86 +12,134 @@ class QueueMultiplexer(object):
     """
     QueueMultiplexer allows several input queues to be merged into a single output queue
 
-    BaseClass implements round-robin FIFO queue multiplexer
+    This class implements a non-blocking round-robin FIFO queue multiplexer
+    See SortedQueueMultiplexer() subclass for a sorted/chronological queue multiplexer with blocking
 
     ### Usage:
-    multiplexer = QueueMultiplexer().run()
+    multiplexer = QueueMultiplexer().run()       # chaining .run() is suitable for one-to-many multiplexing
 
-    input_queue_1 = multiplexer.register_input_queue()
-    input_queue_2 = Manager().Queue()
-    multiplexer.register_input_queue(input_queue_2)
+    input_queue_1 = multiplexer.register_input_queue()                   # generate new input_queue
+    input_queue_2 = multiplexer.register_input_queue(Manager().Queue())  # register external input_queue
+    output_queue  = multiplexer.output_queue()   # multiple output queues can be registered
+    multiplexer.run()                            # many-to-many multiplexing requires registering queues before .run()
 
-    input_queue_1.put("value_1")
-    input_queue_1.put(Queue.Empty)
+    input_queue_1.put("value_1")                 # input data from other processes into input queues
     input_queue_2.put("value_2")
-    input_queue_1.put(Queue.Empty)
+    input_queue_1.put(Queue.Empty)               # mark termination of each input queue with Queue.Empty
+    input_queue_2.put(Queue.Empty)
 
     while True:
-        item = multiplexer.output_queue.get()
-        if item == Queue.Empty: break
+        item = output_queue.get()                # "value_1", "value_2"
+        if item == Queue.Empty: break            # a single Queue.Empty is returned when all input queues have been terminated
     """
 
     defaults = {
-        "maxsize": 0  # type: int
+        "maxsize_input":  0,            # type: int
+        "maxsize_output": 0,            # type: int
+        "wait_for_n_input_queues":  1,  # type: int
+        "wait_for_n_output_queues": 1,  # type: int
         }
 
 
     def __init__( self, *args, **kwargs ):
         super(QueueMultiplexer, self).__init__()
-        self.options = reduce(lambda a, b: dict(a, **b), list(args) + [kwargs])  # join all arguments into single dict
-        self.input_queues = []
-        self.output_queue = self._construct_output_queue()
-        self.thread_pool = MultiProcessing().GlobalThreadPool()
+
+        self.options        = reduce(lambda a, b: dict(a, **b), list(args) + [kwargs])  # join arguments into single dict
+        self.is_running     = False
+        self._input_queues  = []
+        self._output_queues = []
+        self.thread_pool    = MultiProcessing().GlobalThreadPool()  # Handles thread cleanup on program termination
 
 
     def _construct_input_queue( self ):  # type: () -> Queue
-        return Queue(maxsize=self.options['maxsize'])
+        return Queue(maxsize=self.options['maxsize_input'])
 
 
     def _construct_output_queue( self ):  # type: () -> Queue
-        return Queue(maxsize=self.options['maxsize'])
+        return Queue(maxsize=self.options['maxsize_output'])
 
 
-    def register_input_queue( self, queue=None ):  # type: (Union[Queue, None]) -> Queue
-        if queue is None:
+    def input_queue( self, queue=None ):  # type: (Union[Queue, None]) -> Queue
+        """registers/generates a new input queue to watch"""
+        if queue is not None:
+            assert hasattr(queue, 'get'), 'input_queue(queue) must be of type Manager().Queue()'
+            assert hasattr(queue, 'put'), 'input_queue(queue) must be of type Manager().Queue()'
+        else:
             queue = self._construct_input_queue()
-        self.input_queues.append(queue)
+        self._input_queues.append(queue)
+        return queue
+
+
+    def output_queue( self, queue=None ):  # type: (Union[Queue, None]) -> Queue
+        """registers/generates a new output queue"""
+        if queue is not None:
+            assert hasattr(queue, 'get'), 'output_queue(queue) must be of type Manager().Queue()'
+            assert hasattr(queue, 'put'), 'output_queue(queue) must be of type Manager().Queue()'
+        else:
+            queue = self._construct_input_queue()
+        self._output_queues.append(queue)
         return queue
 
 
     def run( self ):  # type: () -> QueueMultiplexer
-        """Starts a new thread to watch input and output queues. Returns self for chaining"""
-        self.thread_pool.apipe(self._run_thread, self.input_queues, self.output_queue, self.options)
+        """
+        Starts a new thread to watch input and output queues.
+
+        Returns self for chaining from constructor, which is suitable for one-to-many / many-to-one queue multiplexing.
+
+        If multiplexing many-to-many input/output queues, all queues should be registered before .run()
+            to avoid race-condition dataloss or mis-ordering from unregistered queues
+            otherwise set: wait_for_n_input_queues= / wait_for_n_output_queues= in constructor arguments
+        """
+        if not self.is_running:  # semaphore to prevent running multiple threads
+            self.is_running = True
+            self.thread_pool.apipe(self._run_thread)
         return self
 
 
     def _run_thread( self ):  # type: () -> None
         self._run_thread_wait()
         self._run_thread_loop()
+        self._run_thread_complete()
 
 
     def _run_thread_wait( self ):  # type: () -> None
-        """Wait for at least one input queue to be registered before starting _run_thread_loop()"""
-        while self._should_thread_terminate():
+        """Wait for at least one input/output queue to be registered before starting _run_thread_loop()"""
+        while ( len(self._input_queues)  < self.options['wait_for_n_input_queues']
+            and len(self._output_queues) < self.options['wait_for_n_output_queues']
+            and self._should_thread_terminate()
+        ):
             time.sleep(0.1)
 
 
     def _should_thread_terminate( self ):  # type: () -> bool
-        return len(self.input_queues) == 0 or not any(self.input_queues)
+        return len(self._input_queues)  == 0 or not any(self._input_queues) \
+            or len(self._output_queues) == 0 or not any(self._output_queues)
 
 
     def _run_thread_loop( self ):
-        while not self._should_thread_terminate():  # exit loop when all input_queues = None
-            for n, input_queue in enumerate(self.input_queues):
-                if input_queue is None: continue  # ignore terminated queues
+        """Implements a non-blocking round-robin FIFO queue multiplexer"""
+        while not self._should_thread_terminate():      # exit loop when all input_queues = None
+            for n, input_queue in enumerate(self._input_queues):
+                if input_queue is None: continue        # ignore terminated queues
 
                 try:   item = input_queue.get_nowait()  # skip rather than block on empty but unterminated queues
                 except Empty: continue                  # Queue.Empty as exception
 
                 if item == Empty:
-                    self.input_queues[n] = None  # Terminate queue
-                else:
-                    self.output_queue.put(item)  # Pick one up and pass it on
+                    self._input_queues[n] = None        # Terminate queue
+                    continue
+
+                # Add item to all output_queues
+                for output_queue in self._output_queues:
+                    output_queue.put(item)
+
+
+    def _run_thread_complete( self ):
+        # Add Queue.Empty to all output_queues, once all input has been read
+        for output_queue in self._output_queues:
+            output_queue.put(Empty)
+
 
 
 class SortedQueueMultiplexer(QueueMultiplexer):
@@ -99,26 +147,39 @@ class SortedQueueMultiplexer(QueueMultiplexer):
     Sorted queue multiplexer
 
     ### Usage:
+
+    # For one-to-many, or many-to-one multiplexing, .run() can be safely chained to the constructor
     multiplexer = SortedQueueMultiplexer(sort_key='timestamp', sort_direction='min', max_size=100).run()
 
-    input_queue_1 = multiplexer.register_input_queue()
-    input_queue_2 = multiplexer.register_input_queue()
+    input_queue_1 = multiplexer.register_input_queue()                   # generate new input_queue
+    input_queue_2 = multiplexer.register_input_queue(Manager().Queue())  # register external input_queue
+    output_queue  = multiplexer.output_queue()   # multiple output queues can be registered
+    multiplexer.run()                            # many-to-many multiplexing requires registering queues before .run()
 
-    input_queue_1.put("value_1")
+    # data in input queues is assumed to be ordered
+    input_queue_1.put({ "timestamp": 1010 })
+    input_queue_1.put({ "timestamp": 1020 })
+    input_queue_1.put({ "timestamp": 1030 })
+
+    input_queue_2.put({ "timestamp": 1019 })
+    input_queue_2.put({ "timestamp": 1020 })
+    input_queue_2.put({ "timestamp": 1021 })
+
+    # mark termination of each input queue with Queue.Empty
     input_queue_1.put(Queue.Empty)
-    input_queue_2.put("value_2")
-    input_queue_1.put(Queue.Empty)
+    input_queue_2.put(Queue.Empty)
 
     while True:
-        item = multiplexer.output_queue.get()
-        if item == Queue.Empty: break
-
+        item = output_queue.get()                # 1010, 1019, 1020, 1020, 1021, 1030
+        if item == Queue.Empty: break            # a single Queue.Empty is returned when all input queues have been terminated
     """
 
     defaults = dict(QueueMultiplexer.defaults, **{
-        "maxsize": 0,  # type: int
-        "sort_key": None,  # type: Union[str,list,Callable]
-        "sort_direction": "min"  # type: str
+        "maxsize_input":  0,             # type: int
+        "maxsize_output": 0,             # type: int
+        "wait_for_n_output_queues": 1,   # type: int
+        "sort_key": None,                # type: Union[str,list,Callable]
+        "sort_direction": "min"          # type: str
         })
 
 
@@ -169,28 +230,36 @@ class SortedQueueMultiplexer(QueueMultiplexer):
         will terminate input_queue if Queue.Empty is returned
         blocks thread when input_queue is empty
         """
-        if (not n in self.peek_buffer) and (self.input_queues[n] is not None):
-            item = self.input_queues[n].get()  # will block if input queue is empty
+        if (not n in self.peek_buffer) and (self._input_queues[n] is not None):
+            item = self._input_queues[n].get()  # will block if input queue is empty
             if item is Empty:
-                self.input_queues[n] = None  # terminate input_queue
-                del self.peek_buffer[n]      # remove from SortedDict
+                self._input_queues[n] = None    # mark input_queue as terminated
+                del self.peek_buffer[n]         # remove from SortedDict
             else:
                 self.peek_buffer[n] = item
 
 
     def _run_thread_loop( self ):  # type: () -> None
         """
-        Sorts input_queue data using using SortedDict peek_buffer, and outputs ordered data into output_queue
-        blocks thread when output queue is full
+        Implements a sorted/chronological queue multiplexer with blocking
+
+        Store next entry from all input_queues in peek_buffer,
+        inplace sort using SortedDict + self._sort_key()
+        write sorted min/max value to all output queues and update peek_buffer
+
+        Blocks thread if any output_queue is full, or any input_queue is empty but not terminated
         """
         while not self._should_thread_terminate():  # exit loop when all input_queues = None
             # Create peek_buffer entries for any new input_queues since last loop
-            for n in range(len(self.peek_buffer), len(self.input_queues)):
+            for n in range(len(self.peek_buffer), len(self._input_queues)):
                 self._update_peek_buffer(n)
 
-            # Grab next min/max item from the SortedDict peek_buffer, and add it to the output_queue
+            # Grab next min/max item from the SortedDict peek_buffer
             (index, item) = self.peek_buffer.popitem(self.sort_pop_index)
-            self.output_queue.put(item)             # will block thread if output queue is full
+
+            # Add item to all output_queues, will block thread if any output queue is full
+            for output_queue in self._output_queues:
+                output_queue.put(item)
 
             # Read the next value from the same input_queue
             self._update_peek_buffer(index)
