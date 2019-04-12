@@ -2,9 +2,8 @@ import time
 from Queue import Empty
 from multiprocessing import Queue
 
-import pydash as _  # DOCS: https://pydash.readthedocs.io/en/latest/api.html
 from sortedcontainers import SortedDict  # DOCS: http://www.grantjenks.com/docs/sortedcontainers/sorteddict.html
-from typing import Union, Callable
+from typing import Union, Callable, Any
 
 from src.util.MultiProcessing import MultiProcessing
 
@@ -121,13 +120,36 @@ class SortedQueueMultiplexer(QueueMultiplexer):
         self.peek_buffer    = SortedDict([], key=self._sort_key)
 
 
-    def _sort_key( self, item ):
+    def _sort_key( self, item ):  # type: (Any) -> None
+        '''Sort function used by SortedDict peek_buffer'''
+
+        output = item
+
         if self.options['sort_key'] is None:
-            output = item
+            pass  # short-circuit common case
+
         elif callable( self.options['sort_key'] ):
             output = self.options['sort_key'].__call__( item )
-        else:
-            output = _.result(item, self.options['sort_key'])  # extracts nested key "a.b.c" or ["a", "b", "c"] and evaluates result if lambda()
+
+        elif isinstance(self.options['sort_key'], (str,list)):
+            # extracts nested key "a.b.c" or ["a", "b", "c"] and evaluates result if lambda() = pydash._result()
+            # was: output = pydash.result(item, self.options['sort_key'])
+
+            sort_keys = self.options['sort_key']
+            if isinstance(self.options['sort_key'], str):
+                sort_keys = sort_keys.split('.')
+            for key in sort_keys:
+                try:
+                    if key in output:          output = output[key]
+                    elif hasattr(output, key): output = getattr(output, key)
+                    else:                      output = None
+
+                    if callable(output):       output = output.__call__()
+                    if output is None:         break
+                except:
+                    output = None
+                    break
+
         return output
 
 
