@@ -19,6 +19,7 @@ readline
 
 # Test Dependencies
 nose
+pytest
 
 # Dependencies
 pydash

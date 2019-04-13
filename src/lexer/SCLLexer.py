@@ -9,17 +9,22 @@ import ply.lex as lex
 import ply.yacc as yacc
 
 
+
 class Lexer(object):
+    defaults = {
+        "debug": False
+        }
     tokens = ()
     names  = {}
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        self.options = reduce(lambda a, b: dict(a, **b), [self.defaults] + list(args) + [kwargs])  # join arguments into single dict
         self.build()
 
     # Build the lexer
     def build(self, **kwargs):
-        self.lexer  = lex.lex(module=self, debug=True, **kwargs)
-        self.parser = yacc.yacc(module=self, debug=True )
+        self.lexer  = lex.lex(module=self, debug=self.options['debug'], **kwargs)
+        self.parser = yacc.yacc(module=self, debug=self.options['debug'] )
 
     # Test it output
     def test(self, data):
@@ -70,7 +75,7 @@ class SCLLexer(Lexer):
     t_RPAREN      = r'[ ]*\)'
 
     # A string containing ignored characters (spaces and tabs)
-    t_ignore  = r'\s+'
+    # t_ignore  = r'\s+'
 
 
     # A regular expression rule with some action code
