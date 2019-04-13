@@ -75,7 +75,7 @@ class SCLLexer(Lexer):
     t_RPAREN      = r'[ ]*\)'
 
     # A string containing ignored characters (spaces and tabs)
-    # t_ignore  = r'\s+'
+    # t_ignore  = ' \t'
 
 
     # A regular expression rule with some action code
@@ -113,11 +113,17 @@ class SCLLexer(Lexer):
 
     # FIXED: figure out how to create an accumulator for an array of values | requires: t_ignore  = '\s+'
     # NOTE:  "STATEMENT WHITESPACE STATEMENTS" produces same result as "STATEMENTS WHITESPACE STATEMENT"
+    # NOTE:  STATEMENTS must match the entire line /^.*$/, hence must match all possible bounding whitespace possibilities
     # https://stackoverflow.com/questions/34445707/ply-yacc-pythonic-syntax-for-accumulating-list-of-comma-separated-values
     def p_STATEMENTS(self, p):
         '''
-        STATEMENTS : STATEMENT WHITESPACE STATEMENTS
-                   | STATEMENT
+        STATEMENTS :            STATEMENT WHITESPACE STATEMENTS
+                   | WHITESPACE STATEMENT WHITESPACE STATEMENTS
+                   | WHITESPACE STATEMENT WHITESPACE STATEMENTS WHITESPACE 
+                   | WHITESPACE STATEMENT
+                   | WHITESPACE STATEMENT WHITESPACE
+                   |            STATEMENT WHITESPACE
+                   |            STATEMENT
         '''
         p[0] = []
         for n in range(1, len(p)):

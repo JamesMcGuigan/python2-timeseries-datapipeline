@@ -59,3 +59,34 @@ def test_parse_keywords(lexer, value):
     assert   len(actual) == 1
     assert   actual == expected
 
+
+@pytest.mark.parametrize('type', data.keys() )
+def test_parse_statements_type(lexer, type):
+    input    = " ".join( map(lambda value: encode_key(value, type), data[type]) )
+    expected = map(lambda value: encode_value(value, type), data[type])
+    actual   = lexer.parser.parse( input )
+    assert   len(actual) == len(data[type])
+    assert   actual == expected
+
+def test_parse_statements_all(lexer):
+    input    = ""
+    expected = []
+    for type in data.keys():
+        input    += " ".join( map(lambda value: encode_key(value, type), data[type]) ) + " "
+        expected += map(lambda value: encode_value(value, type), data[type])
+    input    = input.strip()
+    actual   = lexer.parser.parse( input )
+    assert   len(actual) == sum(map(len, data.values()))
+    assert   actual == expected
+
+@pytest.mark.parametrize('format', [ "%s", "  %s", "%s  ", "  %s  " ])
+@pytest.mark.parametrize('type', data.keys() )
+@pytest.mark.parametrize('size', [1, 2, 3] )
+def test_parse_statements_whitespace(lexer, format, type, size):
+    # test for bounding whitespace combinations
+    input    = (" " * size).join( map(lambda value: encode_key(value, type), data[type][0:size]) )
+    input    = format % (input)
+    expected = map(lambda value: encode_value(value, type), data[type][0:size])
+    actual   = lexer.parser.parse( input )
+    assert   len(actual) == size
+    assert   actual == expected
