@@ -10,7 +10,18 @@ from . import SCLLexer
 data_numbers    = [ "1", "1.2", "+1.3", "-1.4", ".21", "+.22", "-.23" ]
 data_scientific = [ "3e1", "+3E2", "-3E3", ".4E1", "+.4E1", "-.4E1", "+4.1E-7", "-4.1E+7", ]
 data_strings    = [ r'string', r'string "quoted"', r'string (paren)', r'string ("paren quoted")' ]
-data_keywords   = [ "keyword", "_keyword_" ]
+data_keywords   = [ "keyword", "_keyword_", "123_hello" ]
+
+def encode_number_key(value):    return "number="+value
+def encode_number_value(value):  return [{ "key": "number", "value": Decimal(value) }]
+
+def encode_keyword_key(value):   return "keyword="+value
+def encode_keyword_value(value): return [{ "key": "keyword", "value": value }]
+
+def encode_string_key(value):    return 'string="{quoted}"'.format(quoted=re.sub(r'(["()])', r'\\\1', value))
+def encode_string_value(value):  return [{ "key": "string", "value": value }]
+
+
 
 @pytest.fixture()
 def lexer():
@@ -24,33 +35,32 @@ def test_constructor(lexer):
 
 @pytest.mark.parametrize('value', data_numbers )
 def test_parse_numbers(lexer, value):
-    input    = "number="+value
-    expected = [{ "key": "number", "value": Decimal(value) }]
+    input    = encode_number_key(value)
+    expected = encode_number_value(value)
     actual   = lexer.parser.parse( input )
     assert   len(actual) == 1
     assert   actual == expected
 
 @pytest.mark.parametrize('value', data_scientific )
 def test_parse_scientific(lexer, value):
-    input    = "scientific="+value
-    expected = [{ "key": "scientific", "value": Decimal(value) }]
+    input    = encode_number_key(value)
+    expected = encode_number_value(value)
     actual   = lexer.parser.parse( input )
     assert   len(actual) == 1
     assert   actual == expected
 
 @pytest.mark.parametrize('value', data_strings )
 def test_parse_strings(lexer, value):
-    quoted   = re.sub(r'(["()])', r'\\\1', value) 
-    input    = 'string="{quoted}"'.format(quoted=quoted)
-    expected = [{ "key": "string", "value": value }]
+    input    = encode_string_key(value)
+    expected = encode_string_value(value)
     actual   = lexer.parser.parse( input )
     assert   len(actual) == 1
     assert   actual == expected
 
 @pytest.mark.parametrize('value', data_keywords )
 def test_parse_keywords(lexer, value):
-    input    = "keyword="+value
-    expected = [{ "key": "keyword", "value": value }]
+    input    = encode_keyword_key(value)
+    expected = encode_keyword_value(value)
     actual   = lexer.parser.parse( input )
     assert   len(actual) == 1
     assert   actual == expected

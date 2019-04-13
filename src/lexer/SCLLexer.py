@@ -82,7 +82,7 @@ class SCLLexer(Lexer):
     # Note addition of self parameter since we're in a class
     # Source: https://stackoverflow.com/questions/638565/parsing-scientific-notation-sensibly
     def t_NUMBER(self,t):
-        r'[+-]?(\d*\.\d+|\d+)([eE][+-]?\d+)?'
+        r'[+-]?(\d*\.\d+|\d+)([eE][+-]?\d+)?\b'  # BUGFIX: \b ending required to avoid matching keyword 123_hello
         t.value = Decimal(t.value)
         return t
 
