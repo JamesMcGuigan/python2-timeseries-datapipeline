@@ -2,8 +2,13 @@
 venv
 src.untested
 
+# Ignored file extensions
 *.wip.*
 *.wip
 *.pyc
+
+# PLY debug files
 parsetab.py
+lextab.py
 parser.out
+
