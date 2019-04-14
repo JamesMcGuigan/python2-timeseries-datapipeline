@@ -1,6 +1,8 @@
 .idea
 venv
+venv_windows
 src.untested
+
 
 # Ignored file extensions
 *.wip.*
