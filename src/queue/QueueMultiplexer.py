@@ -186,8 +186,6 @@ class SortedQueueMultiplexer(QueueMultiplexer):
 
     def __init__( self, *args, **kwargs ):
         super(SortedQueueMultiplexer, self).__init__(*args, **kwargs)
-
-        # self.sort_pop_index  = { "min": 0, "max": -1 }.get(self.options['sort_direction'], -1)
         self.peek_buffer     = {}
 
 
@@ -227,7 +225,7 @@ class SortedQueueMultiplexer(QueueMultiplexer):
     def _update_peek_buffer( self, index, force=False ):  # type: (int) -> None
         """
         updates numbered slot in peek_buffer from relevant input_queue
-        noop if peek_buffer is already populated or input_queue has been terminated
+        no-op if peek_buffer is already populated or input_queue has been terminated
         will terminate input_queue if Queue.Empty is returned
         blocks thread when input_queue is empty
         """
@@ -247,7 +245,6 @@ class SortedQueueMultiplexer(QueueMultiplexer):
         Implements a sorted/chronological queue multiplexer with blocking
 
         Store next entry from all input_queues in peek_buffer,
-        inplace sort using SortedDict + self._sort_key()
         write sorted min/max value to all output queues and update peek_buffer
 
         Blocks thread if any output_queue is full, or any input_queue is empty but not terminated
@@ -257,7 +254,8 @@ class SortedQueueMultiplexer(QueueMultiplexer):
             for n in range(len(self.peek_buffer), len(self._input_queues)):
                 self._update_peek_buffer(n)
 
-            # Grab next min/max item from the SortedDict peek_buffer
+            # Grab next min/max item from the peek_buffer
+            # TODO: Can this be optimized???
             values = sorted(self.peek_buffer.values(), key=itemgetter(0), reverse=self.options['sort_reverse'] )
             (sort_key, index, item) = values[0]
 
