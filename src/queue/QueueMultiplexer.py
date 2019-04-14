@@ -2,6 +2,7 @@ import time
 from Queue import Empty
 from multiprocessing import Queue
 from operator import itemgetter
+
 from sortedcontainers import SortedList
 from typing import Any, Callable, Union
 
@@ -49,7 +50,7 @@ class QueueMultiplexer(object):
         self.is_running     = False
         self._input_queues  = []
         self._output_queues = []
-        self.thread_pool    = MultiProcessing().GlobalThreadPool()  # Handles thread cleanup on program termination
+        self.thread_pool    = None
 
 
     def _construct_input_queue( self ):  # type: () -> Queue
@@ -92,9 +93,13 @@ class QueueMultiplexer(object):
             to avoid race-condition dataloss or mis-ordering from unregistered queues
             otherwise set: wait_for_n_input_queues= / wait_for_n_output_queues= in constructor arguments
         """
+        if not self.thread_pool:
+            self.thread_pool = MultiProcessing().ThreadPool(ncpus=1)  # Handles thread cleanup on program termination
+            
         if not self.is_running:  # semaphore to prevent running multiple threads
             self.is_running = True
             self.thread_pool.apipe(self._run_thread)
+
         return self
 
 
