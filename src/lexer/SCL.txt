@@ -1,4 +1,6 @@
 key=value(key1=value1)
+   key=value ( key1=value1 )
+
 key=value(key1=value1 key2=value2 key3=value3)
 key=value(key1=value1 key2=value2 key3="string")
 key=value(key1=value1 key2=value2 key3="string \"quoted\"")
@@ -7,6 +9,10 @@ key=value(key1=value1 key2=value2 key3=(key31=value31 key32=value32 key33="strin
 key=value(key1=value1 key2=value2 key3=(key31=value31 key32=value32 key33="string \"quoted\""))
 
 key=value
+key=123_value
+key=123_value_123
+key=value_123
+
 key="string"
 key="string \"quoted\""
 key="string \(paren\)"
