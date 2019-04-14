@@ -12,7 +12,8 @@ import ply.yacc as yacc
 
 class Lexer(object):
     defaults = {
-        "debug": False
+        "debug": False,
+        "optimize": 1,
         }
     tokens = ()
     names  = {}
@@ -23,8 +24,8 @@ class Lexer(object):
 
     # Build the lexer
     def build(self, **kwargs):
-        self.lexer  = lex.lex(module=self, debug=self.options['debug'], **kwargs)
-        self.parser = yacc.yacc(module=self, debug=self.options['debug'] )
+        self.lexer  = lex.lex(module=self, **self.options)
+        self.parser = yacc.yacc(module=self, **self.options )
 
     # Test it output
     def test(self, data):
@@ -50,7 +51,8 @@ class Lexer(object):
             print("Syntax error at EOF")
 
 
-
+# TODO: Convert output format to: { "key1": (value, { children... }), "key2": (value) }
+#       allowing for lookup as: result[key1][0] and result[key1][1][child_key2][0]
 class SCLLexer(Lexer):
 
     ##### Lexer Rules #####

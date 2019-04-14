@@ -19,6 +19,7 @@ if __name__ == '__main__':
     with open(datafile) as file:
         data_lines = file.readlines()
         lexer  = SCLLexer()
+        # for n in range(0,10000):  # optional loop for performance testing
         for linenumber, line in enumerate(data_lines):
             if not re.match(r'^\s*$', line):
                 print "\n**********\n", linenumber, ':', line, "**********\n"
