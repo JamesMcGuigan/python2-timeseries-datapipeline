@@ -1,17 +1,19 @@
 import atexit
 import signal
-from multiprocessing import Manager, Lock
+from multiprocessing import Lock, Manager
 
 from pathos.multiprocessing import ProcessPool
 from pathos.threading import ThreadPool
 
 
+
 class MultiProcessing:
 
     __singleton = None
-    def __new__(self, *args, **kwds):
+    def __new__(self, *args, **kwargs):
         if MultiProcessing.__singleton is None:
-            MultiProcessing.__singleton = object.__new__(self, *args, **kwds)
+            # noinspection PyArgumentList
+            MultiProcessing.__singleton = object.__new__(self, *args, **kwargs)
         return MultiProcessing.__singleton
 
 
@@ -25,27 +27,27 @@ class MultiProcessing:
         atexit.register(self.onExit)
 
 
-    def ThreadPool( self, *args, **kwds ):
-        thread_pool = ThreadPool(*args, **kwds)
+    def ThreadPool( self, *args, **kwargs ):
+        thread_pool = ThreadPool(*args, **kwargs)
         self.register_atexit( thread_pool )
         return thread_pool
 
 
-    def GlobalThreadPool( self, *args, **kwds ):
-        if self.process_pool is None:
-            self.process_pool = ProcessPool(*args, **kwds)
-        return self.process_pool
+    def GlobalThreadPool( self, *args, **kwargs ):
+        if self.thread_pool is None:
+            self.thread_pool = ThreadPool(*args, **kwargs)
+        return self.thread_pool
 
 
-    def ProcessPool( self, key=None, new=False, *args, **kwds ):
-        process_pool = ProcessPool(*args, **kwds)
+    def ProcessPool( self, key=None, new=False, *args, **kwargs ):
+        process_pool = ProcessPool(*args, **kwargs)
         self.register_atexit( process_pool )
         return process_pool
 
 
-    def GlobalProcessPool( self, *args, **kwds ):
+    def GlobalProcessPool( self, *args, **kwargs ):
         if self.process_pool is None:
-            self.process_pool = ProcessPool(*args, **kwds)
+            self.process_pool = ProcessPool(*args, **kwargs)
         return self.process_pool
 
 

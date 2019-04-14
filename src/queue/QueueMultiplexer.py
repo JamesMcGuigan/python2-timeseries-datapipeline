@@ -1,11 +1,12 @@
 import time
 from Queue import Empty
 from multiprocessing import Queue
+from operator import itemgetter
 
-from sortedcontainers import SortedDict  # DOCS: http://www.grantjenks.com/docs/sortedcontainers/sorteddict.html
 from typing import Any, Callable, Union
 
 from src.util.MultiProcessing import MultiProcessing
+
 
 
 class QueueMultiplexer(object):
@@ -18,8 +19,8 @@ class QueueMultiplexer(object):
     ### Usage:
     multiplexer = QueueMultiplexer().run()       # chaining .run() is suitable for one-to-many multiplexing
 
-    input_queue_1 = multiplexer.register_input_queue()                   # generate new input_queue
-    input_queue_2 = multiplexer.register_input_queue(Manager().Queue())  # register external input_queue
+    input_queue_1 = multiplexer.input_queue()                   # generate new input_queue
+    input_queue_2 = multiplexer.input_queue(Manager().Queue())  # register external input_queue
     output_queue  = multiplexer.output_queue()   # multiple output queues can be registered
     multiplexer.run()                            # many-to-many multiplexing requires registering queues before .run()
 
@@ -44,7 +45,7 @@ class QueueMultiplexer(object):
     def __init__( self, *args, **kwargs ):
         super(QueueMultiplexer, self).__init__()
 
-        self.options        = reduce(lambda a, b: dict(a, **b), list(args) + [kwargs])  # join arguments into single dict
+        self.options        = reduce(lambda a, b: dict(a, **b), [self.defaults] + list(args) + [kwargs])  # join arguments into single dict
         self.is_running     = False
         self._input_queues  = []
         self._output_queues = []
@@ -76,7 +77,7 @@ class QueueMultiplexer(object):
             assert hasattr(queue, 'get'), 'output_queue(queue) must be of type Manager().Queue()'
             assert hasattr(queue, 'put'), 'output_queue(queue) must be of type Manager().Queue()'
         else:
-            queue = self._construct_input_queue()
+            queue = self._construct_output_queue()
         self._output_queues.append(queue)
         return queue
 
@@ -151,8 +152,8 @@ class SortedQueueMultiplexer(QueueMultiplexer):
     # For one-to-many, or many-to-one multiplexing, .run() can be safely chained to the constructor
     multiplexer = SortedQueueMultiplexer(sort_key='timestamp', sort_direction='min', max_size=100).run()
 
-    input_queue_1 = multiplexer.register_input_queue()                   # generate new input_queue
-    input_queue_2 = multiplexer.register_input_queue(Manager().Queue())  # register external input_queue
+    input_queue_1 = multiplexer.input_queue()                   # generate new input_queue
+    input_queue_2 = multiplexer.input_queue(Manager().Queue())  # register external input_queue
     output_queue  = multiplexer.output_queue()   # multiple output queues can be registered
     multiplexer.run()                            # many-to-many multiplexing requires registering queues before .run()
 
@@ -179,18 +180,18 @@ class SortedQueueMultiplexer(QueueMultiplexer):
         "maxsize_output": 0,             # type: int
         "wait_for_n_output_queues": 1,   # type: int
         "sort_key": None,                # type: Union[str,list,Callable]
-        "sort_direction": "min"          # type: str
+        "sort_reverse": False            # type: bool
         })
 
 
     def __init__( self, *args, **kwargs ):
         super(SortedQueueMultiplexer, self).__init__(*args, **kwargs)
 
-        self.sort_pop_index = { "min": 0, "max": -1 }.get(self.options['sort_direction'], 0)
-        self.peek_buffer    = SortedDict([], key=self._sort_key)
+        # self.sort_pop_index  = { "min": 0, "max": -1 }.get(self.options['sort_direction'], -1)
+        self.peek_buffer     = {}
 
 
-    def _sort_key( self, item ):  # type: (Any) -> None
+    def _sort_key( self, item ):  # type: (Any) -> Any
         """Sort function used by SortedDict peek_buffer"""
 
         output = item
@@ -210,7 +211,7 @@ class SortedQueueMultiplexer(QueueMultiplexer):
                 sort_keys = sort_keys.split('.')
             for key in sort_keys:
                 try:
-                    if key in output:          output = output[key]
+                    if key in output:          output = output[key]    # output["a"]["b"]["c"]
                     elif hasattr(output, key): output = getattr(output, key)
                     else:                      output = None
 
@@ -223,20 +224,22 @@ class SortedQueueMultiplexer(QueueMultiplexer):
         return output
 
 
-    def _update_peek_buffer( self, n ):  # type: (int) -> None
+    def _update_peek_buffer( self, index, force=False ):  # type: (int) -> None
         """
         updates numbered slot in peek_buffer from relevant input_queue
         noop if peek_buffer is already populated or input_queue has been terminated
         will terminate input_queue if Queue.Empty is returned
         blocks thread when input_queue is empty
         """
-        if (not n in self.peek_buffer) and (self._input_queues[n] is not None):
-            item = self._input_queues[n].get()  # will block if input queue is empty
+        if (force or index not in self.peek_buffer) and (self._input_queues[index] is not None):
+            item = self._input_queues[index].get()  # will block if input queue is empty
             if item is Empty:
-                self._input_queues[n] = None    # mark input_queue as terminated
-                del self.peek_buffer[n]         # remove from SortedDict
+                self._input_queues[index] = None    # mark input_queue as terminated
+                if index in self.peek_buffer:       # should never happen
+                    del self.peek_buffer[index]     # remove from SortedDict :raises KeyError: if key not found
             else:
-                self.peek_buffer[n] = item
+                sort_key = self._sort_key(item)
+                self.peek_buffer[index] = (sort_key, index, item) 
 
 
     def _run_thread_loop( self ):  # type: () -> None
@@ -255,11 +258,12 @@ class SortedQueueMultiplexer(QueueMultiplexer):
                 self._update_peek_buffer(n)
 
             # Grab next min/max item from the SortedDict peek_buffer
-            (index, item) = self.peek_buffer.popitem(self.sort_pop_index)
+            values = sorted(self.peek_buffer.values(), key=itemgetter(0), reverse=self.options['sort_reverse'] )
+            (sort_key, index, item) = values[0]
 
             # Add item to all output_queues, will block thread if any output queue is full
             for output_queue in self._output_queues:
                 output_queue.put(item)
 
             # Read the next value from the same input_queue
-            self._update_peek_buffer(index)
+            self._update_peek_buffer(index, force=True)
