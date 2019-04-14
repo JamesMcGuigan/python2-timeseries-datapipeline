@@ -2,7 +2,7 @@ import time
 from Queue import Empty
 from multiprocessing import Queue
 from operator import itemgetter
-
+from sortedcontainers import SortedList
 from typing import Any, Callable, Union
 
 from src.util.MultiProcessing import MultiProcessing
@@ -186,7 +186,10 @@ class SortedQueueMultiplexer(QueueMultiplexer):
 
     def __init__( self, *args, **kwargs ):
         super(SortedQueueMultiplexer, self).__init__(*args, **kwargs)
-        self.peek_buffer     = {}
+
+        self.sort_pop_index   = 0 if self.options['sort_reverse'] == False else -1
+        self.peek_buffer_dict = {}
+        self.peek_buffer_list = SortedList(key=itemgetter(0,1))  # sort on (sort_key, index)
 
 
     def _sort_key( self, item ):  # type: (Any) -> Any
@@ -229,15 +232,16 @@ class SortedQueueMultiplexer(QueueMultiplexer):
         will terminate input_queue if Queue.Empty is returned
         blocks thread when input_queue is empty
         """
-        if (force or index not in self.peek_buffer) and (self._input_queues[index] is not None):
+        if (force or index not in self.peek_buffer_dict) and (self._input_queues[index] is not None):
             item = self._input_queues[index].get()  # will block if input queue is empty
             if item is Empty:
                 self._input_queues[index] = None    # mark input_queue as terminated
-                if index in self.peek_buffer:       # should never happen
-                    del self.peek_buffer[index]     # remove from SortedDict :raises KeyError: if key not found
             else:
+                # OPTIMIZATION: sort results in both dict() and SortedList
+                # Assumes _run_thread_loop() will: self.peek_buffer_list.pop(index); del self.peek_buffer_dict[index]
                 sort_key = self._sort_key(item)
-                self.peek_buffer[index] = (sort_key, index, item) 
+                self.peek_buffer_dict[index] = (sort_key, index, item)
+                self.peek_buffer_list.add(     (sort_key, index, item) )
 
 
     def _run_thread_loop( self ):  # type: () -> None
@@ -251,13 +255,13 @@ class SortedQueueMultiplexer(QueueMultiplexer):
         """
         while not self._should_thread_terminate():  # exit loop when all input_queues = None
             # Create peek_buffer entries for any new input_queues since last loop
-            for n in range(len(self.peek_buffer), len(self._input_queues)):
-                self._update_peek_buffer(n)
+            for n in range(len(self.peek_buffer_dict), len(self._input_queues)):
+                self._update_peek_buffer(n, force=False)
 
             # Grab next min/max item from the peek_buffer
-            # TODO: Can this be optimized???
-            values = sorted(self.peek_buffer.values(), key=itemgetter(0), reverse=self.options['sort_reverse'] )
-            (sort_key, index, item) = values[0]
+            # WAS: values = sorted(self.peek_buffer_dict.values(), key=itemgetter(0,1), reverse=self.options['sort_reverse'] )
+            (sort_key, index, item) = self.peek_buffer_list.pop( index=self.sort_pop_index )
+            del self.peek_buffer_dict[index]
 
             # Add item to all output_queues, will block thread if any output queue is full
             for output_queue in self._output_queues:
