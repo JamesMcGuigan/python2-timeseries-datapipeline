@@ -12,7 +12,7 @@ for OS in UNIX WINDOWS; do
 
             PYTHON=`     which python2`
             PIP=`        which pip2`
-            VIRTUALENV="`which virtualenv` -p '$PYTHON'"
+            VIRTUALENV="`which virtualenv` -p $PYTHON"
         fi
         if [[ $PYTHON_VERSION == 3 ]]; then
             PYTHON=`which python3`
