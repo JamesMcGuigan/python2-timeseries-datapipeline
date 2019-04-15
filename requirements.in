@@ -16,11 +16,13 @@ pip-tools
 
 # .pythonstartup.py Dependencies
 readline
+fim
 
 # Test Dependencies
 nose
 pytest
 typing
+
 
 # Dependencies
 pydash
@@ -30,4 +32,5 @@ glob2
 ply
 simplejson
 sortedcontainers
+
 
