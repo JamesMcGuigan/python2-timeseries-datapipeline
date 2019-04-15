@@ -44,7 +44,7 @@ class EventManager(object):
         # NOTE: first-pass implementation is to use a unindexed list of events
         self.rules = []                     # type: List[Dict]
         self.rules_index = { None: set() }  # type: Dict[Any:Set]
-
+        self.rules_index_cache = {}         # type: Dict[frozenset:List]
 
 
     ##### Public Interface #####
@@ -144,33 +144,51 @@ class EventManager(object):
         rules   = []
         indices = self._match_rules_index( event )
         for index in indices:
-            rule = self.rules[index]
-            if rule['condition'].matches( event ):
-                rules.append( rule )
+            if self.rules[index] is None:  # self._match_rules_index() may return unregistered indices
+                rule = self.rules[index]
+                if rule['condition'].matches( event ):
+                    rules.append( rule )
         return rules
 
 
-    def _match_rules_index( self,  event ):  # type: (Dict) -> List[int]
+    def _match_rules_index( self, event ):  # type: (Dict) -> List[int]
+        # quick lookup if we have seen this set of keys before
+        event_keys = frozenset( event.keys() )
+        if event_keys in self.rules_index_cache:
+            return self.rules_index_cache[event_keys]
+
         # match all rules containing at least one event key, excluding removed rules
         indices = set( self.rules_index.get(None, []) )
-        for key in event:
-            if key in self.rules_index:
-                indices = indices.union( self.rules_index[key] )
-        for index in indices:
-            if self.rules[index] is None:
-                indices.remove(index)
-        return sorted(indices)
+        for key in self.rules_index:
+            if key in event:
+                # rule contains a key in event = possible match for event
+                indices = indices | self.rules_index[key]  # set.union()
+            else:
+                # rule contains a key not in event = not possible to match
+                indices = indices - self.rules_index[key]  # set.difference()
+
+        indices = sorted(indices)
+        self.rules_index_cache[event_keys] = indices  # invalidated by self._register_index()
+        return indices
 
 
     def _register_index( self, index, condition ):  # type: (int, Union[Condition,Dict]) -> None
         condition = Condition(condition)
+
+        self._invalidate_rules_index_cache( index, condition )
         for key in condition.keys() + [ None ]:
             if key not in self.rules_index: self.rules_index[key] = set()
             self.rules_index[key].add(index)
-
+            
 
     def _unregister_index( self, index, condition ):  # type: (int, Union[Condition,Dict]) -> None
         condition = Condition(condition)
+
+        # NOTE: no need to invalidate cache on remove, as None's are filtered post-cache
         for key in condition.keys() + [ None ]:
             if key in self.rules_index:
                 self.rules_index[key].remove(index)
+
+
+    def _invalidate_rules_index_cache( self, index, condition ):  # type: (int, Union[Condition,Dict]) -> None
+        self.rules_index_cache = {}  # TODO: can this be optimized, or is a full reset quicker?
