@@ -6,6 +6,8 @@ from src.readers.CSVReader import CSVReader
 from src.util.MultiProcessing import MultiProcessing
 
 
+
+# Basic example of reading a CSV file and passing its contents through multiprocessing.Queue() in separate threads
 def main():
     print "START - main()"
 

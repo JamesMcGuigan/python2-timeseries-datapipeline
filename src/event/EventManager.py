@@ -19,11 +19,18 @@ class EventManager(object):
 
     # register events
     commands = []; responses = [];
-    event_manager.register(lambda event: commands.append(event),  condition={ "type": "command"  }, options={ "async": True })
+    event_manager.register(
+        callback=lambda event: commands.append(event),
+        condition={
+            "name.type": [ "command", "response" ],
+            "action":    lambda x: x.startsWith("test")
+        },
+        options={ "async": True }
+    )
     event_manager.register(lambda event: responses.append(event), condition={ "type": "response" })
 
     # add events to queue to trigger events
-    queue.put({ "type": "command",  "action": "test"    })
+    queue.put({ "name": { "type": "command", } "action": "testCommand" })
     queue.put({ "type": "response", "value":  "success" })
 
     # manually trigger events
