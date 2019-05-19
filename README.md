@@ -14,7 +14,7 @@ py.test ./src/
 ```
 
 ## requirements.sh
-- [src/requirements.sh](src/requirements.sh)
+- [requirements.sh](requirements.sh)
 
 Generic virtualenv + pip-tools buildchain script, that creates/updates `./venv/` folders. 
 
