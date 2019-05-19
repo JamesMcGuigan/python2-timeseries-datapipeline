@@ -14,7 +14,7 @@ py.test ./src/
 ```
 
 ## requirements.sh
-- [src/requirements.sh]()
+- [src/requirements.sh](src/requirements.sh)
 
 Generic virtualenv + pip-tools buildchain script, that creates/updates `./venv/` folders. 
 
@@ -24,30 +24,30 @@ Works on my Windows / Cygwin / Unix / OSX environments and supports Python2 + Py
 
 
 ## Multiprocessing.py
-- [src/util/MultiProcessing.py]()
+- [src/util/MultiProcessing.py](src/util/MultiProcessing.py)
 
 Singleton class wrapper around `pathos.multiprocessing` allowing for reuse of a global thread/process pool
 as well as clean termination of threads/processes atexit and onKeyboardInterupt
 
 
 ## main.py
-- [src/main.py]()
+- [src/main.py](src/main.py)
 
 Basic script example of reading a CSV file and passing its contents through multiprocessing.Queue() in separate threads
 
 
 ## FileReader / CSVReader
-- [src/readers/FileReader.py]()
-- [src/readers/CSVReader.py]()
+- [src/readers/FileReader.py](src/readers/FileReader.py)
+- [src/readers/CSVReader.py](src/readers/CSVReader.py)
 
 Simple multithreaded worker class allowing a text/csv file to be loaded line-by-line onto a Queue 
 
 
 ## Lex/Yacc Parser using PLY
-- [src/lexer/SCLLexer.py]()
-- [src/lexer/SCLLexer_test.py]()
-- [src/lexer/SCLLexer_example.py]()
-- [src/lexer/SCL.txt]()
+- [src/lexer/SCLLexer.py](src/lexer/SCLLexer.py)
+- [src/lexer/SCLLexer_test.py](src/lexer/SCLLexer_test.py)
+- [src/lexer/SCLLexer_example.py](src/lexer/SCLLexer_example.py)
+- [src/lexer/SCL.txt](src/lexer/SCL.txt)
 
 Lex/Yacc to parse a nested SCL command syntax grammar into a nested python dictionary with unit tests
 
@@ -87,8 +87,8 @@ Output:
 
 
 ## QueueMultiplexer / SortedQueueMultiplexer
-- [src/queue/QueueMultiplexer.py]()
-- [src/queue/QueueMultiplexer_test.py]()
+- [src/queue/QueueMultiplexer.py](src/queue/QueueMultiplexer.py)
+- [src/queue/QueueMultiplexer_test.py](src/queue/QueueMultiplexer_test.py)
 
 `QueueMultiplexer` is a base class that runs in a separate python thread. 
 It allows clients to register multiple input and output queues of type `multiprocessing.Queue()`, 
@@ -158,8 +158,8 @@ while True:
 
 
 ## EventManager
-- [src/event/EventManager.py]()
-- [src/event/Condition.py]()
+- [src/event/EventManager.py](src/event/EventManager.py)
+- [src/event/Condition.py](src/event/Condition.py)
 
 **NOTE: untested and unrun code**
 
