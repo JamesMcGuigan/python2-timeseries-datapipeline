@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -x
-cd $(readlink -f $(dirname $BASH_SOURCE[0]));
+cd $(dirname $(readlink -f ${BASH_SOURCE[0]}));  # OSX requires: brew install coreutils
 
 PYTHON_VERSION=2
     
@@ -54,10 +54,14 @@ for OS in UNIX WINDOWS; do
         echo "PS1=\"($VENV) \$(echo \$PS1 | perl -p -e 's/^(\s*\(.*?\))+//g')\"" >> $VENV_ACTIVATE  # BUGFIX: $PS1 prompt
     fi;
 
+    # pip-compile without argument requires ./requirements.txt to exist
+    if [[ ! -f ./requirements.in  ]]; then touch ./requirements.in;  fi;
+    if [[ ! -f ./requirements.txt ]]; then touch ./requirements.txt; fi;
+
     # Use pip and python from inside the virtualenv
     source $VENV_ACTIVATE
     if [[ $OS == 'UNIX' ]]; then
-        pip install --upgrade pip pip-tools
+        $PIP install --upgrade pip pip-tools
         pip-compile
         pip-sync
     fi;
