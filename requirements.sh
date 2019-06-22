@@ -2,8 +2,8 @@
 set -x
 cd $(dirname $(readlink -f ${BASH_SOURCE[0]}));  # OSX requires: brew install coreutils
 
-PYTHON_VERSION=2
-    
+PYTHON_VERSION=3
+
 for OS in UNIX WINDOWS; do
     if [[ $OS == 'UNIX' ]]; then
         if [[ $PYTHON_VERSION == 2 ]]; then
@@ -37,7 +37,7 @@ for OS in UNIX WINDOWS; do
         VENV=venv_windows
         VENV_BIN=./$VENV/Scripts
         VENV_ACTIVATE=./$VENV/Scripts/activate
-        
+
         if [[ ! $PYTHON ]]; then continue; fi;  # don't install ./venv_windows/ if not on Windows
     fi
 
@@ -55,8 +55,9 @@ for OS in UNIX WINDOWS; do
     fi;
 
     # pip-compile without argument requires ./requirements.txt to exist
-    if [[ ! -f ./requirements.in  ]]; then touch ./requirements.in;  fi;
-    if [[ ! -f ./requirements.txt ]]; then touch ./requirements.txt; fi;
+    if [[ ! -f ./requirements.in   ]]; then touch ./requirements.in;   fi;
+    if [[ ! -f ./requirements.txt  ]]; then touch ./requirements.txt;  fi;
+    if [[ ! -f ./.pythonstartup.py ]]; then touch ./.pythonstartup.py; fi;
 
     # Use pip and python from inside the virtualenv
     source $VENV_ACTIVATE
